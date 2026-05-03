@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🔥 Pro Game System</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: black;
+    color: #00ffcc;
+    text-align: center;
+}
+
+.container { margin-top: 50px; }
+
+input {
+    padding: 10px;
+    margin: 5px;
+}
+
+button {
+    padding: 10px 20px;
+    background: #00ffcc;
+    border: none;
+    cursor: pointer;
+}
+
+#gameScreen { display: none; }
+
+#box {
+    position: fixed;
+    display: none;
+    cursor: pointer;
+    border-radius: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<div id="loginScreen" class="container">
+    <h2>🔐 Login</h2>
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+</div>
+
+<div id="menuScreen" class="container" style="display:none;">
+    <h2>🎮 Select Mode</h2>
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('normal')">Normal</button>
+    <button onclick="startGame('hard')">Hard</button>
+    <br><br>
+    <button onclick="startMultiplayer()">👥 Multiplayer</button>
+</div>
+
+<div id="gameScreen">
+    <h2 id="modeTitle"></h2>
+    <p>Score: <span id="score">0</span></p>
+    <p>Time: <span id="time">10</span></p>
+    <div id="box"></div>
+</div>
+
+<script>
+let score = 0;
+let timeLeft = 10;
+let speed = 800;
+let timer, mover;
+let currentUser = "";
+let multiplayer = false;
+let playerTurn = 1;
+let scores = [0,0];
+
+// LOGIN
+function login(){
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
+
+    if(!user || !pass){
+        alert("Enter details");
+        return;
+    }
+
+    localStorage.setItem(user, pass);
+    currentUser = user;
+
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("menuScreen").style.display = "block";
+}
+
+// START GAME
+function startGame(mode){
+    multiplayer = false;
+    setupMode(mode);
+
+    document.getElementById("menuScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+
+    runGame();
+}
+
+// MULTIPLAYER (local turn)
+function startMultiplayer(){
+    multiplayer = true;
+    playerTurn = 1;
+    scores = [0,0];
+    startGame("normal");
+}
+
+// MODE SETTINGS
+function setupMode(mode){
+    if(mode=="easy"){ speed=1000; timeLeft=15; }
+    if(mode=="normal"){ speed=700; timeLeft=12; }
+    if(mode=="hard"){ speed=400; timeLeft=10; }
+
+    document.getElementById("modeTitle").innerText = "Mode: " + mode.toUpperCase();
+}
+
+// GAME LOOP
+function runGame(){
+    score = 0;
+    updateUI();
+
+    let box = document.getElementById("box");
+    box.style.display = "block";
+
+    moveBox();
+    mover = setInterval(moveBox, speed);
+
+    timer = setInterval(()=>{
+        timeLeft--;
+        updateUI();
+
+        if(timeLeft<=0){
+            clearInterval(timer);
+            clearInterval(mover);
+            endGame();
+        }
+    },1000);
+}
+
+function moveBox(){
+    let box = document.getElementById("box");
+
+    let size = Math.random()*60+40;
+    box.style.width = size+"px";
+    box.style.height = size+"px";
+
+    box.style.left = Math.random()*(window.innerWidth-size)+"px";
+    box.style.top = Math.random()*(window.innerHeight-size)+"px";
+
+    box.style.background = "hsl("+Math.random()*360+",100%,50%)";
+}
+
+document.getElementById("box").onclick = function(e){
+    score++;
+    updateUI();
+    moveBox();
+    e.stopPropagation();
+};
+
+document.body.onclick = function(e){
+    if(e.target.id!="box"){
+        score--;
+        updateUI();
+    }
+};
+
+function updateUI(){
+    document.getElementById("score").innerText = score;
+    document.getElementById("time").innerText = timeLeft;
+}
+
+// END GAME
+function endGame(){
+    document.getElementById("box").style.display="none";
+
+    if(multiplayer){
+        scores[playerTurn-1] = score;
+
+        if(playerTurn==1){
+            playerTurn=2;
+            alert("Player 2 turn!");
+            startGame("normal");
+        } else {
+            alert("P1: "+scores[0]+" | P2: "+scores[1]);
+        }
+    } else {
+        let best = localStorage.getItem(currentUser+"_score") || 0;
+        if(score > best){
+            localStorage.setItem(currentUser+"_score", score);
+        }
+
+        alert("Score: "+score);
+    }
+
+    document.getElementById("gameScreen").style.display="none";
+    document.getElementById("menuScreen").style.display="block";
+}
+</script>
+
+</body>
+</html>

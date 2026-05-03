@@ -1,0 +1,48 @@
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+nav a {
+    color: white;
+    margin: 10px;
+    text-decoration: none;
+}
+
+.hero {
+    text-align: center;
+    padding: 80px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    background: cyan;
+    color: black;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.game {
+    text-align: center;
+    margin-top: 40px;
+}
+
+#box {
+    width: 100px;
+    height: 100px;
+    background: red;
+    margin: 20px auto;
+    display: none;
+    cursor: pointer;
+}
