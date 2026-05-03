@@ -3,134 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚡ Neon Tap Challenge</title>
+<title>🎮 Level Game</title>
 
 <style>
-:root {
-  --bg1:#0f172a;
-  --bg2:#020617;
-  --accent:#00ffd5;
-}
-
-*{box-sizing:border-box}
-body{
+body {
   margin:0;
-  font-family:system-ui, Arial;
-  background: radial-gradient(circle at top, #0f172a, #020617);
+  font-family:Arial;
+  background:#020617;
   color:white;
-  overflow:hidden;
+  text-align:center;
 }
 
-/* Top HUD */
+/* Screens */
+.screen{
+  display:none;
+  padding:20px;
+}
+.active{
+  display:block;
+}
+
+/* Buttons */
+button{
+  padding:12px 20px;
+  margin:10px;
+  border:none;
+  border-radius:10px;
+  background:#00ffd5;
+  color:black;
+  font-weight:bold;
+}
+
+/* Level grid */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+
+.level{
+  padding:15px;
+  background:#111;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* Game box */
+#box{
+  position:absolute;
+  display:none;
+  border-radius:12px;
+  box-shadow:0 0 20px #00ffd5;
+}
+
+/* HUD */
 .hud{
   position:fixed;
   top:0;
   width:100%;
-  padding:12px;
+  background:rgba(0,0,0,0.5);
+  padding:10px;
   display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:rgba(0,0,0,0.4);
-  backdrop-filter:blur(10px);
-  font-size:14px;
-  z-index:10;
-}
-
-.hud span{color:var(--accent)}
-
-/* Center Start */
-.center{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  text-align:center;
-}
-
-button{
-  padding:14px 28px;
-  font-size:18px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(45deg,#00ffd5,#00bfff);
-  color:black;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* Game Area */
-#box{
-  position:absolute;
-  display:none;
-  border-radius:16px;
-  box-shadow:0 0 25px #00ffd5;
-  transition: transform 0.1s;
-}
-
-#box:active{
-  transform:scale(0.9);
-}
-
-/* Progress bar */
-.bar{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  height:6px;
-  background:#111;
-}
-.fill{
-  height:100%;
-  width:100%;
-  background:var(--accent);
+  justify-content:space-around;
 }
 </style>
+
 </head>
 
 <body>
 
-<div class="hud">
-  <div>🎯 <span id="score">0</span></div>
-  <div>🔥 <span id="combo">0</span></div>
-  <div>⏱ <span id="time">15</span></div>
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <h1>🎮 Tap Game</h1>
+  <button onclick="showLevels()">Play</button>
 </div>
 
-<div class="center" id="menu">
-  <h1>⚡ Neon Tap</h1>
-  <button onclick="startGame()">Start</button>
+<!-- LEVEL SELECT -->
+<div id="levels" class="screen">
+  <h2>Select Level</h2>
+  <div class="grid" id="levelGrid"></div>
+  <button onclick="showMenu()">Back</button>
 </div>
 
-<div id="box"></div>
-
-<div class="bar"><div class="fill" id="bar"></div></div>
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="hud">
+    <div>Lvl: <span id="lvl">1</span></div>
+    <div>Score: <span id="score">0</span></div>
+    <div>Time: <span id="time">10</span></div>
+  </div>
+  <div id="box"></div>
+</div>
 
 <script>
-let score=0, combo=0, time=15, speed=900;
-let timer, mover, lastClick=0, running=false;
+let currentLevel=1;
+let score=0;
+let time=10;
+let speed=800;
+let timer,mover;
+let running=false;
 
-function startGame(){
-  score=0; combo=0; time=15; speed=900;
-  running=true;
-
-  document.getElementById("menu").style.display="none";
-  document.getElementById("box").style.display="block";
-
-  updateUI();
-  moveBox();
-  mover=setInterval(moveBox, speed);
-  timer=setInterval(tick,1000);
+/* Screens */
+function showMenu(){
+  setScreen("menu");
+}
+function showLevels(){
+  setScreen("levels");
+}
+function startLevel(lvl){
+  currentLevel=lvl;
+  setScreen("game");
+  startGame();
 }
 
-function tick(){
-  time--;
-  updateUI();
-  document.getElementById("bar").style.width=(time/15)*100+"%";
+function setScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-  if(time<=0){
-    clearInterval(timer);
-    clearInterval(mover);
-    endGame();
-  }
+/* Create levels */
+let grid=document.getElementById("levelGrid");
+for(let i=1;i<=50;i++){
+  let div=document.createElement("div");
+  div.className="level";
+  div.innerText=i;
+  div.onclick=()=>startLevel(i);
+  grid.appendChild(div);
+}
+
+/* Game logic */
+function startGame(){
+  score=0;
+  time=10;
+
+  // difficulty increase 🔥
+  speed=900 - (currentLevel*10);
+  if(speed<200) speed=200;
+
+  running=true;
+
+  document.getElementById("lvl").innerText=currentLevel;
+  updateUI();
+
+  let box=document.getElementById("box");
+  box.style.display="block";
+
+  moveBox();
+  mover=setInterval(moveBox,speed);
+
+  timer=setInterval(()=>{
+    time--;
+    updateUI();
+    if(time<=0){
+      clearInterval(timer);
+      clearInterval(mover);
+      endGame();
+    }
+  },1000);
 }
 
 function moveBox(){
@@ -138,15 +167,14 @@ function moveBox(){
 
   let box=document.getElementById("box");
 
-  let size=Math.random()*80+80;
+  let size=120 - currentLevel; // smaller each level
+  if(size<40) size=40;
+
   box.style.width=size+"px";
   box.style.height=size+"px";
 
-  let x=Math.random()*(window.innerWidth-size);
-  let y=Math.random()*(window.innerHeight-size);
-
-  box.style.left=x+"px";
-  box.style.top=y+"px";
+  box.style.left=Math.random()*(window.innerWidth-size)+"px";
+  box.style.top=Math.random()*(window.innerHeight-size)+"px";
 
   box.style.background="hsl("+Math.random()*360+",100%,50%)";
 }
@@ -154,22 +182,7 @@ function moveBox(){
 document.getElementById("box").onclick=function(e){
   if(!running) return;
 
-  let now=Date.now();
-  let diff=now-lastClick;
-  lastClick=now;
-
-  if(diff<350){
-    combo++;
-    score+=2+combo;
-  }else{
-    combo=0;
-    score++;
-  }
-
-  speed*=0.96;
-  clearInterval(mover);
-  mover=setInterval(moveBox,speed);
-
+  score++;
   updateUI();
   moveBox();
   e.stopPropagation();
@@ -177,24 +190,27 @@ document.getElementById("box").onclick=function(e){
 
 document.body.onclick=function(e){
   if(running && e.target.id!=="box"){
-    score-=2;
-    combo=0;
+    score--;
     updateUI();
   }
 };
 
 function updateUI(){
-  score=Math.max(0,score);
   document.getElementById("score").innerText=score;
-  document.getElementById("combo").innerText=combo;
   document.getElementById("time").innerText=time;
 }
 
 function endGame(){
   running=false;
   document.getElementById("box").style.display="none";
-  document.getElementById("menu").style.display="block";
-  alert("Score: "+score);
+
+  if(score>=currentLevel){ 
+    alert("✅ Level Passed!");
+    startLevel(currentLevel+1);
+  } else {
+    alert("❌ Try Again");
+    showLevels();
+  }
 }
 </script>
 
